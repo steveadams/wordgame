@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -12,6 +14,7 @@ const (
 )
 
 func main() {
+	router := gin.Default()
 	rand.Seed(time.Now().UnixNano())
 
 	words, err := loadWords("words.txt")
@@ -22,8 +25,12 @@ func main() {
 	// TODO use words in your implementation
 	_ = words
 
-	log.Printf("Starting server on http://%s", serverAddress)
-	if err := http.ListenAndServe(serverAddress, nil); err != nil {
-		log.Fatal(err)
-	}
+	router.POST("/new", stub)
+	router.POST("/guess", stub)
+
+	router.Run(serverAddress)
+}
+
+func stub(c *gin.Context) {
+	c.String(http.StatusNotImplemented, http.StatusText(http.StatusNotImplemented))
 }
