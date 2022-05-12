@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -10,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Game struct {
+type GameRecord struct {
 	id      string
 	word    string
 	guesses []string
@@ -30,7 +29,6 @@ var words []string
 
 func init() {
 	var err error
-
 	words, err = loadWords("words.txt")
 
 	if err != nil {
@@ -39,29 +37,29 @@ func init() {
 }
 
 func newHandler(c *gin.Context) {
-	game, err := initializeGame()
+	game, err := createGameRecord()
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 	}
 
-	c.JSON(http.StatusOK, toGameState(game))
+	c.JSON(http.StatusOK, gameRecordToGameState(game))
 }
 
-func initializeGame() (*Game, error) {
+func createGameRecord() (*GameRecord, error) {
 	id, err := generateIdentifier()
 
 	if err != nil {
-		return nil, fmt.Errorf("initializeGame: failed to generate an identifier: %w", err)
+		return nil, err
 	}
 
 	word := words[rand.Intn(len(words))]
 	guesses := []string{}
 	current := strings.Repeat("_", len(word))
 
-	return &Game{id, word, guesses, current}, nil
+	return &GameRecord{id, word, guesses, current}, nil
 }
 
-func toGameState(game *Game) GameState {
+func gameRecordToGameState(game *GameRecord) GameState {
 	return GameState{Current: game.current, GuessesRemaining: guessLimit - len(game.guesses), Id: game.id, Word: game.word}
 }
