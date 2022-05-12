@@ -9,24 +9,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type GameRecord struct {
-	id      string
-	word    string
-	guesses []string
-	current string
-}
+type Guesses map[rune]bool
 
-type GameState struct {
+type GameSession struct {
 	Id               string `json:"id"`
-	Current          string `json:"current"`
-	Word             string `json:"word"`
 	GuessesRemaining int    `json:"guesses_remaining"`
+	RevealedLetters  []rune `json:"current"`
+	// TODO: Do not export this – used for testing
+	Word string `json:"word"`
 }
 
 const guessLimit = 6
 
-var words []string
+var (
+	words        []string
+	gameSessions map[string]GameSession
+)
 
+// Load all words and prepare a map to store game sessions in
 func init() {
 	var err error
 	words, err = loadWords("words.txt")
@@ -34,19 +34,21 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	gameSessions = make(map[string]GameSession)
 }
 
 func newHandler(c *gin.Context) {
-	game, err := createGameRecord()
+	game, err := initializeGame()
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 	}
 
-	c.JSON(http.StatusOK, gameRecordToGameState(game))
+	c.JSON(http.StatusOK, game)
 }
 
-func createGameRecord() (*GameRecord, error) {
+func initializeGame() (*GameSession, error) {
 	id, err := generateIdentifier()
 
 	if err != nil {
@@ -54,12 +56,26 @@ func createGameRecord() (*GameRecord, error) {
 	}
 
 	word := words[rand.Intn(len(words))]
-	guesses := []string{}
-	current := strings.Repeat("_", len(word))
+	current := []rune(strings.Repeat("_", len(word)))
 
-	return &GameRecord{id, word, guesses, current}, nil
+	game := GameSession{
+		Id:               id,
+		Word:             word,
+		GuessesRemaining: guessLimit,
+		RevealedLetters:  current}
+
+	// Store this game's state
+	gameSessions[id] = game
+
+	return &game, nil
 }
 
-func gameRecordToGameState(game *GameRecord) GameState {
-	return GameState{Current: game.current, GuessesRemaining: guessLimit - len(game.guesses), Id: game.id, Word: game.word}
+func updateRevealedLetters(word string, current []rune, guess rune) []rune {
+	for index, element := range word {
+		if element == guess {
+			current[index] = element
+		}
+	}
+
+	return current
 }
