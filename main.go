@@ -1,10 +1,7 @@
 package main
 
 import (
-	"log"
-	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,20 +10,17 @@ const (
 	serverAddress = "localhost:1337"
 )
 
-func main() {
+func setupRouter() *gin.Engine {
 	router := gin.Default()
-	rand.Seed(time.Now().UnixNano())
 
-	words, err := loadWords("words.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// TODO use words in your implementation
-	_ = words
-
-	router.POST("/new", stub)
+	router.POST("/new", newHandler)
 	router.POST("/guess", stub)
+
+	return router
+}
+
+func main() {
+	router := setupRouter()
 
 	router.Run(serverAddress)
 }
