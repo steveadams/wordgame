@@ -1,30 +1,22 @@
 package main
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"log"
+	"os"
 )
 
 const (
+	wordsPath     = "words.txt"
 	serverAddress = "localhost:1337"
 )
 
-func setupRouter() *gin.Engine {
-	router := gin.Default()
-
-	router.POST("/new", newHandler)
-	router.POST("/guess", stub)
-
-	return router
-}
-
 func main() {
-	router := setupRouter()
+	reader, err := os.Open(wordsPath)
+	if err != nil {
+		log.Fatalf("failed to open words file: %s", err.Error())
+	}
+	defer reader.Close()
 
-	router.Run(serverAddress)
-}
-
-func stub(c *gin.Context) {
-	c.String(http.StatusNotImplemented, http.StatusText(http.StatusNotImplemented))
+	startGameRoutine(reader)
+	setupRouter().Run(serverAddress)
 }

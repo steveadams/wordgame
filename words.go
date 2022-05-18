@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"os"
+	"io"
 	"regexp"
 	"strings"
 
@@ -14,15 +14,10 @@ import (
 var wordsRegexp = regexp.MustCompile("^[A-Z]+$")
 
 // loadWords loads the word dictionary from the provided file path.
-func loadWords(path string) ([]string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, errors.Wrap(err, "open word file")
-	}
-	defer f.Close()
-
+func loadWords(f *io.Reader) ([]string, error) {
 	words := []string{}
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(*f)
+
 	for scanner.Scan() {
 		// Normalize and filter words.
 		word := strings.ToUpper(strings.TrimSpace(scanner.Text()))
@@ -30,6 +25,7 @@ func loadWords(path string) ([]string, error) {
 			words = append(words, word)
 		}
 	}
+
 	if err := scanner.Err(); err != nil {
 		return nil, errors.Wrap(err, "scan words")
 	}
