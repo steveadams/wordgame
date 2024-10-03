@@ -1,4 +1,4 @@
-import { assertEvent, assign, fromPromise, setup } from "xstate";
+import { assertEvent, assign, fromPromise, setup } from 'xstate';
 
 type NewGame = {
   id: string;
@@ -6,31 +6,30 @@ type NewGame = {
   current: string;
 };
 
-type GuessResult = Omit<NewGame, "id">;
+type GuessResult = Omit<NewGame, 'id'>;
 
 const newGameLogic = fromPromise(async () => {
-  const response = await fetch("http://localhost:1337/new", { method: "POST" });
+  const response = await fetch('http://localhost:1337/new', { method: 'POST' });
 
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   const game = (await response.json()) as NewGame;
-  console.log(game);
 
   return game;
 });
 
 const makeGuessLogic = fromPromise<GuessResult, { id: string; guess: string }>(
   async ({ input }) => {
-    const response = await fetch("http://localhost:1337/guess", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('http://localhost:1337/guess', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: input.id, guess: input.guess }),
     });
 
     const result = (await response.json()) as GuessResult;
 
     return result;
-  }
+  },
 );
 
 export const gameMachine = setup({
@@ -43,26 +42,26 @@ export const gameMachine = setup({
       currentGuess: string;
     },
     events: {} as
-      | { type: "new" }
+      | { type: 'new' }
       | {
-          type: "start";
+          type: 'start';
           id: string;
           current: string;
           guessesRemaining: number;
         }
       | {
-          type: "xstate.done.actor.newGame";
+          type: 'xstate.done.actor.newGame';
           output: { id: string; current: string; guesses_remaining: number };
         }
       | {
-          type: "xstate.done.actor.guess";
+          type: 'xstate.done.actor.guess';
           output: { id: string; current: string; guesses_remaining: number };
         }
-      | { type: "setGuess"; guess: string }
-      | { type: "updateGuesses"; guess: string }
-      | { type: "guess"; guess: string }
-      | { type: "fail"; cause: string }
-      | { type: "retry" },
+      | { type: 'setGuess'; guess: string }
+      | { type: 'updateGuesses'; guess: string }
+      | { type: 'guess'; guess: string }
+      | { type: 'fail'; cause: string }
+      | { type: 'retry' },
   },
   actors: {
     newGame: newGameLogic,
@@ -70,36 +69,33 @@ export const gameMachine = setup({
   },
   actions: {
     setGameData: assign(({ event }) => {
-      console.log(event.type);
-      assertEvent(event, "xstate.done.actor.newGame");
+      assertEvent(event, 'xstate.done.actor.newGame');
 
       return {
         id: event.output.id,
         current: event.output.current,
         guessesRemaining: event.output.guesses_remaining,
+        guessedLetters: [],
+        currentGuess: '',
       };
     }),
     setCurrentGuess: assign({
       currentGuess: ({ event }) => {
-        console.log("set current guess", event);
-        assertEvent(event, "setGuess");
+        assertEvent(event, 'setGuess');
         return event.guess;
       },
       guessedLetters: ({ context, event }) => {
-        assertEvent(event, "setGuess");
+        assertEvent(event, 'setGuess');
         return [...context.guessedLetters, event.guess];
       },
     }),
     setGuessResult: assign(({ event }) => {
-      console.log("guesser finished", event);
-      assertEvent(event, "xstate.done.actor.guess");
-
-      console.log();
+      assertEvent(event, 'xstate.done.actor.guess');
 
       return {
         current: event.output.current,
         guessesRemaining: event.output.guesses_remaining,
-        currentGuess: "",
+        currentGuess: '',
       };
     }),
   },
@@ -108,97 +104,97 @@ export const gameMachine = setup({
       return context.guessesRemaining === 0;
     },
     allLettersGuessed: ({ context }) => {
-      return !context.current.includes("_");
+      return !context.current.includes('_');
     },
   },
 }).createMachine({
   context: {
-    id: "",
+    id: '',
     guessedLetters: [],
-    current: "",
+    current: '',
     guessesRemaining: 0,
-    currentGuess: "",
+    currentGuess: '',
   },
-  initial: "idle",
+  initial: 'idle',
   states: {
     idle: {
       on: {
         new: {
-          target: "loading",
+          target: 'loading',
         },
       },
     },
     loading: {
       invoke: {
-        id: "newGame",
-        src: "newGame",
+        id: 'newGame',
+        src: 'newGame',
         onDone: {
-          target: "playing",
-          actions: "setGameData",
+          target: 'playing',
+          actions: 'setGameData',
           onError: {
-            target: "failure",
+            target: 'failure',
           },
         },
       },
     },
     playing: {
-      entry: () => console.log("enter playing"),
+      entry: () => console.log('enter playing'),
       always: [
         {
-          target: "win",
-          guard: "allLettersGuessed",
+          target: 'win',
+          guard: 'allLettersGuessed',
         },
         {
-          target: "lose",
-          guard: "noGuessesRemaining",
+          target: 'lose',
+          guard: 'noGuessesRemaining',
         },
       ],
       on: {
         setGuess: {
-          actions: "setCurrentGuess",
-          target: "guessing",
+          actions: 'setCurrentGuess',
+          target: 'guessing',
         },
       },
     },
     guessing: {
-      entry: () => console.log("enter guessing"),
+      entry: () => console.log('enter guessing'),
       invoke: {
-        id: "guess",
-        src: "guesser",
+        id: 'guess',
+        src: 'guesser',
         input: ({ context }) => ({
           id: context.id,
           guess: context.currentGuess,
         }),
         onDone: {
-          target: "playing",
+          target: 'playing',
           actions: [
-            () => console.log("setGuessResult should run"),
-            "setGuessResult",
+            () => console.log('setGuessResult should run'),
+            'setGuessResult',
           ],
         },
         onError: {
-          target: "failure",
+          target: 'failure',
         },
       },
     },
     win: {
       on: {
         new: {
-          target: "idle",
+          target: 'idle',
         },
       },
     },
     lose: {
       on: {
         new: {
-          target: "idle",
+          target: 'idle',
         },
       },
     },
     failure: {
       on: {
         retry: {
-          target: "idle",
+          target: 'idle',
         },
       },
     },
