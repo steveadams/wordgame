@@ -8,11 +8,10 @@ type NewGame = {
 
 type GuessResult = Omit<NewGame, 'id'>;
 
+const GAME_API_URL = import.meta.env.VITE_GAME_API_URL;
+
 const newGameLogic = fromPromise(async () => {
-  const response = await fetch('http://localhost:1337/new', { method: 'POST' });
-
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
+  const response = await fetch(`${GAME_API_URL}/new`, { method: 'POST' });
   const game = (await response.json()) as NewGame;
 
   return game;
@@ -20,15 +19,13 @@ const newGameLogic = fromPromise(async () => {
 
 const sendGuessLogic = fromPromise<GuessResult, { id: string; guess: string }>(
   async ({ input }) => {
-    const response = await fetch('http://localhost:1337/guess', {
+    const response = await fetch(`${GAME_API_URL}/guess`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: input.id, guess: input.guess }),
     });
 
     const result = (await response.json()) as GuessResult;
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     return result;
   },
@@ -126,7 +123,6 @@ export const gameMachine = setup({
   states: {
     idle: {},
     loading: {
-      entry: () => console.log('entered loading'),
       invoke: {
         id: 'newGame',
         src: 'newGame',
@@ -140,7 +136,6 @@ export const gameMachine = setup({
       },
     },
     playing: {
-      entry: () => console.log('enter playing'),
       always: [
         {
           target: 'win',
@@ -159,7 +154,6 @@ export const gameMachine = setup({
       },
     },
     guessing: {
-      entry: () => console.log('enter guessing'),
       invoke: {
         id: 'guess',
         src: 'guesser',
@@ -169,10 +163,7 @@ export const gameMachine = setup({
         }),
         onDone: {
           target: 'playing',
-          actions: [
-            () => console.log('setGuessResult should run'),
-            'setGuessResult',
-          ],
+          actions: ['setGuessResult'],
         },
         onError: {
           target: 'failure',

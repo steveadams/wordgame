@@ -4,23 +4,40 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
+
+func init() {
+	godotenv.Load()
+}
+
+func getOrigin() string {
+	origin := os.Getenv("ORIGIN_URL")
+
+	if origin == "" {
+		panic("ORIGIN_URL is not set")
+	}
+
+	fmt.Println("ORIGIN_URL:", origin)
+
+	return origin
+}
 
 func setupRouter() *gin.Engine {
 	router := gin.New()
 
+	origin := getOrigin()
+
+	router.SetTrustedProxies(nil)
 	router.Use(cors.New(cors.Config{
-		// AllowOrigins:    []string{"*"},
-		AllowMethods:    []string{"PUT"},
-		AllowHeaders:    []string{"Origin", "Content-Type"},
-		ExposeHeaders:   []string{"Content-Length"},
-		AllowAllOrigins: true,
-		// AllowOriginFunc: func(origin string) bool {
-		// 	return origin == "https://github.com"
-		// },
+		AllowOrigins:  []string{origin},
+		AllowMethods:  []string{"PUT"},
+		AllowHeaders:  []string{"Origin", "Content-Type"},
+		ExposeHeaders: []string{"Content-Length"},
 	}))
 
 	router.POST("/new", newHandler)

@@ -241,8 +241,6 @@ const Keyboard = ({ game }: { game: GameRef }) => {
 
   const startNewGame = useCallback(() => game.send({ type: 'new' }), [game]);
 
-  console.log({ currentGuess });
-
   return (
     <div className="grid gap-1">
       {letterKeys.map((row) => (
@@ -321,10 +319,10 @@ const App: FC = () => (
   <>
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 font-sans">
       <main className="mx-auto max-w-3xl flex flex-col gap-8">
-        <h1 className="w-min h-min text-6xl whitespace-nowrap leading-tight bg-clip-text text-transparent bg-gradient-to-tr from-green-200 to-cyan-200 silkscreen-regular">
+        <h1 className="w-min h-min text-6xl whitespace-nowrap leading-tight bg-clip-text text-transparent bg-gradient-to-tr from-emerald-500 to-cyan-500 dark:from-green-200 dark:to-cyan-200 silkscreen-regular">
           Glyph Guesser
         </h1>
-        <p className="text-md text-green-200 font-mono">
+        <p className="text-md text-emerald-500 dark:text-green-200 font-mono">
           Guess the missing letters! You've got 6 tries.
         </p>
         <Game />
