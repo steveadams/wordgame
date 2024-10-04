@@ -22,8 +22,6 @@ func getOrigin() string {
 		panic("ORIGIN_URL is not set")
 	}
 
-	fmt.Println("ORIGIN_URL:", origin)
-
 	return origin
 }
 
