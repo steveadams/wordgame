@@ -40,7 +40,7 @@ func setupRouter() *gin.Engine {
 
 	router.POST("/new", newHandler)
 	router.POST("/guess", guessHandler)
-	router.GET("/health", healthHandler)
+	router.GET("/", healthHandler)
 
 	return router
 }
