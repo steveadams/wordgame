@@ -18,7 +18,7 @@ const newGameLogic = fromPromise(async () => {
   return game;
 });
 
-const makeGuessLogic = fromPromise<GuessResult, { id: string; guess: string }>(
+const sendGuessLogic = fromPromise<GuessResult, { id: string; guess: string }>(
   async ({ input }) => {
     const response = await fetch('http://localhost:1337/guess', {
       method: 'POST',
@@ -27,6 +27,8 @@ const makeGuessLogic = fromPromise<GuessResult, { id: string; guess: string }>(
     });
 
     const result = (await response.json()) as GuessResult;
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     return result;
   },
@@ -65,7 +67,7 @@ export const gameMachine = setup({
   },
   actors: {
     newGame: newGameLogic,
-    guesser: makeGuessLogic,
+    guesser: sendGuessLogic,
   },
   actions: {
     setGameData: assign(({ event }) => {
@@ -111,20 +113,20 @@ export const gameMachine = setup({
   context: {
     id: '',
     guessedLetters: [],
-    current: '',
+    current: '...',
     guessesRemaining: 0,
     currentGuess: '',
   },
-  initial: 'idle',
-  states: {
-    idle: {
-      on: {
-        new: {
-          target: 'loading',
-        },
-      },
+  initial: 'loading',
+  on: {
+    new: {
+      target: '.loading',
     },
+  },
+  states: {
+    idle: {},
     loading: {
+      entry: () => console.log('entered loading'),
       invoke: {
         id: 'newGame',
         src: 'newGame',
@@ -177,20 +179,8 @@ export const gameMachine = setup({
         },
       },
     },
-    win: {
-      on: {
-        new: {
-          target: 'idle',
-        },
-      },
-    },
-    lose: {
-      on: {
-        new: {
-          target: 'idle',
-        },
-      },
-    },
+    win: {},
+    lose: {},
     failure: {
       on: {
         retry: {
