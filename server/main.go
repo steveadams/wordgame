@@ -7,7 +7,7 @@ import (
 
 const (
 	wordsPath     = "words.txt"
-	serverAddress = "localhost:1337"
+	serverAddress = "0.0.0.0:1337"
 )
 
 func main() {
