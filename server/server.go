@@ -42,6 +42,7 @@ func setupRouter() *gin.Engine {
 
 	router.POST("/new", newHandler)
 	router.POST("/guess", guessHandler)
+	router.GET("/health", healthHandler)
 
 	return router
 }
@@ -88,6 +89,10 @@ func guessHandler(c *gin.Context) {
 	saveOrEndGame(game)
 
 	c.JSON(http.StatusOK, makeGameResponse(game))
+}
+
+func healthHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
 func getTurnErrorCode(err error) int {
