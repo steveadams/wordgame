@@ -1,9 +1,12 @@
 import { assertEvent, assign, fromPromise, setup } from 'xstate';
 
+import { VALID_KEYS } from '../data';
+import type { AlphaChar } from '../types';
+
 type NewGame = {
   id: string;
   guesses_remaining: number;
-  current: string;
+  current: AlphaChar[];
 };
 
 type GuessResult = Omit<NewGame, 'id'>;
@@ -35,10 +38,10 @@ export const gameMachine = setup({
   types: {
     context: {} as {
       id: string;
-      guessedLetters: string[];
+      guessedLetters: AlphaChar[];
       current: string;
       guessesRemaining: number;
-      currentGuess: string;
+      currentGuess: AlphaChar | '';
     },
     events: {} as
       | { type: 'new' }
@@ -56,9 +59,7 @@ export const gameMachine = setup({
           type: 'xstate.done.actor.guess';
           output: { id: string; current: string; guesses_remaining: number };
         }
-      | { type: 'setGuess'; guess: string }
-      | { type: 'updateGuesses'; guess: string }
-      | { type: 'guess'; guess: string }
+      | { type: 'guess'; guess: AlphaChar }
       | { type: 'fail'; cause: string }
       | { type: 'retry' },
   },
@@ -75,16 +76,16 @@ export const gameMachine = setup({
         current: event.output.current,
         guessesRemaining: event.output.guesses_remaining,
         guessedLetters: [],
-        currentGuess: '',
+        currentGuess: VALID_KEYS.EMPTY,
       };
     }),
     setCurrentGuess: assign({
       currentGuess: ({ event }) => {
-        assertEvent(event, 'setGuess');
+        assertEvent(event, 'guess');
         return event.guess;
       },
       guessedLetters: ({ context, event }) => {
-        assertEvent(event, 'setGuess');
+        assertEvent(event, 'guess');
         return [...context.guessedLetters, event.guess];
       },
     }),
@@ -94,7 +95,7 @@ export const gameMachine = setup({
       return {
         current: event.output.current,
         guessesRemaining: event.output.guesses_remaining,
-        currentGuess: '',
+        currentGuess: VALID_KEYS.EMPTY,
       };
     }),
   },
@@ -147,13 +148,13 @@ export const gameMachine = setup({
         },
       ],
       on: {
-        setGuess: {
-          actions: 'setCurrentGuess',
+        guess: {
           target: 'guessing',
         },
       },
     },
     guessing: {
+      entry: ['setCurrentGuess'],
       invoke: {
         id: 'guess',
         src: 'guesser',

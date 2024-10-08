@@ -5,6 +5,7 @@ import { useSelector } from '@xstate/react';
 import { match, P } from 'ts-pattern';
 
 import { GameRef } from '../types';
+import { KEY_LAYOUT } from '../data';
 
 const keyColorClasses = {
   slate: [
@@ -90,17 +91,11 @@ export const Keyboard = ({ game }: { game: GameRef }) => {
   const playing = useSelector(game, (snap) => snap.matches('playing'));
   const loading = useSelector(game, (snap) => snap.matches('loading'));
 
-  const letterKeys = [
-    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-    ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
-  ];
-
   const startNewGame = useCallback(() => game.send({ type: 'new' }), [game]);
 
   return (
     <div className="grid gap-1">
-      {letterKeys.map((row) => (
+      {KEY_LAYOUT.map((row) => (
         <div key={row.join('')} className="flex gap-[0.25rem] justify-center">
           {row.map((letter) =>
             match({ guessedLetters, current, currentGuess })
@@ -113,9 +108,7 @@ export const Keyboard = ({ game }: { game: GameRef }) => {
                 () => (
                   <Key
                     key={letter}
-                    onClick={() =>
-                      game.send({ type: 'setGuess', guess: letter })
-                    }
+                    onClick={() => game.send({ type: 'guess', guess: letter })}
                     disabled={!playing}
                   >
                     {letter}
