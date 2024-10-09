@@ -1,7 +1,7 @@
 import { assertEvent, assign, fromPromise, setup } from 'xstate';
 
-import { VALID_KEYS } from '../data';
-import type { AlphaChar } from '../types';
+import { KEYS } from '../data';
+import type { AlphaChar, GameContext, GameEvents } from '../types';
 
 type NewGame = {
   id: string;
@@ -36,32 +36,8 @@ const sendGuessLogic = fromPromise<GuessResult, { id: string; guess: string }>(
 
 export const gameMachine = setup({
   types: {
-    context: {} as {
-      id: string;
-      guessedLetters: AlphaChar[];
-      current: string;
-      guessesRemaining: number;
-      currentGuess: AlphaChar | '';
-    },
-    events: {} as
-      | { type: 'new' }
-      | {
-          type: 'start';
-          id: string;
-          current: string;
-          guessesRemaining: number;
-        }
-      | {
-          type: 'xstate.done.actor.newGame';
-          output: { id: string; current: string; guesses_remaining: number };
-        }
-      | {
-          type: 'xstate.done.actor.guess';
-          output: { id: string; current: string; guesses_remaining: number };
-        }
-      | { type: 'guess'; guess: AlphaChar }
-      | { type: 'fail'; cause: string }
-      | { type: 'retry' },
+    context: {} as GameContext,
+    events: {} as GameEvents,
   },
   actors: {
     newGame: newGameLogic,
@@ -76,18 +52,19 @@ export const gameMachine = setup({
         current: event.output.current,
         guessesRemaining: event.output.guesses_remaining,
         guessedLetters: [],
-        currentGuess: VALID_KEYS.EMPTY,
+        currentGuess: KEYS.EMPTY,
       };
     }),
-    setCurrentGuess: assign({
-      currentGuess: ({ event }) => {
-        assertEvent(event, 'guess');
-        return event.guess;
-      },
-      guessedLetters: ({ context, event }) => {
-        assertEvent(event, 'guess');
-        return [...context.guessedLetters, event.guess];
-      },
+    setCurrentGuess: assign(({ context, event }) => {
+      assertEvent(event, 'guess');
+
+      return {
+        currentGuess: event.guess,
+        guessedLetters: [...context.guessedLetters, event.guess],
+      };
+    }),
+    unsetCurrentGuess: assign({
+      currentGuess: '',
     }),
     setGuessResult: assign(({ event }) => {
       assertEvent(event, 'xstate.done.actor.guess');
@@ -95,17 +72,13 @@ export const gameMachine = setup({
       return {
         current: event.output.current,
         guessesRemaining: event.output.guesses_remaining,
-        currentGuess: VALID_KEYS.EMPTY,
+        currentGuess: KEYS.EMPTY,
       };
     }),
   },
   guards: {
-    noGuessesRemaining: ({ context }) => {
-      return context.guessesRemaining === 0;
-    },
-    allLettersGuessed: ({ context }) => {
-      return !context.current.includes('_');
-    },
+    noGuessesRemaining: ({ context }) => context.guessesRemaining === 0,
+    allLettersGuessed: ({ context }) => !context.current.includes('_'),
   },
 }).createMachine({
   context: {
@@ -115,23 +88,24 @@ export const gameMachine = setup({
     guessesRemaining: 0,
     currentGuess: '',
   },
+  id: '(machine)',
   initial: 'loading',
   on: {
     new: {
-      target: '.loading',
+      target: '#(machine).loading',
     },
   },
   states: {
-    idle: {},
     loading: {
       invoke: {
         id: 'newGame',
+        input: {},
         src: 'newGame',
         onDone: {
           target: 'playing',
           actions: 'setGameData',
           onError: {
-            target: 'failure',
+            target: 'error',
           },
         },
       },
@@ -154,7 +128,8 @@ export const gameMachine = setup({
       },
     },
     guessing: {
-      entry: ['setCurrentGuess'],
+      entry: 'setCurrentGuess',
+      exit: 'unsetCurrentGuess',
       invoke: {
         id: 'guess',
         src: 'guesser',
@@ -164,19 +139,19 @@ export const gameMachine = setup({
         }),
         onDone: {
           target: 'playing',
-          actions: ['setGuessResult'],
+          actions: 'setGuessResult',
         },
         onError: {
-          target: 'failure',
+          target: 'error',
         },
       },
     },
     win: {},
     lose: {},
-    failure: {
+    error: {
       on: {
         retry: {
-          target: 'idle',
+          target: 'guessing',
         },
       },
     },

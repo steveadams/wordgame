@@ -26,18 +26,10 @@ const keyColorClasses = {
   red: ['from-red-700 to-red-800', 'from-red-500 to-red-600', 'bg-red-600'],
 } as const;
 
-export const keySizeClasses = {
-  square: 'size-12',
-  full: 'h-12 flex-grow',
-  wide: 'h-12 min-w-60 text-center',
-} as const;
-
 type KeyColor = keyof typeof keyColorClasses;
-type KeySize = keyof typeof keySizeClasses;
 
 type KeyProps = {
   onClick?: () => void;
-  size?: KeySize;
   color?: KeyColor;
   disabled?: boolean;
   pending?: boolean;

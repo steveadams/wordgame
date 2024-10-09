@@ -1,4 +1,4 @@
-export const VALID_KEYS = {
+export const KEYS = Object.freeze({
   A: 'A',
   B: 'B',
   C: 'C',
@@ -26,39 +26,22 @@ export const VALID_KEYS = {
   Y: 'Y',
   Z: 'Z',
   EMPTY: '',
-} as const;
+  UNDERSCORE: '_',
+});
 
 export const KEY_LAYOUT = [
   [
-    VALID_KEYS.Q,
-    VALID_KEYS.W,
-    VALID_KEYS.E,
-    VALID_KEYS.R,
-    VALID_KEYS.T,
-    VALID_KEYS.Y,
-    VALID_KEYS.U,
-    VALID_KEYS.I,
-    VALID_KEYS.O,
-    VALID_KEYS.P,
+    KEYS.Q,
+    KEYS.W,
+    KEYS.E,
+    KEYS.R,
+    KEYS.T,
+    KEYS.Y,
+    KEYS.U,
+    KEYS.I,
+    KEYS.O,
+    KEYS.P,
   ],
-  [
-    VALID_KEYS.A,
-    VALID_KEYS.S,
-    VALID_KEYS.D,
-    VALID_KEYS.F,
-    VALID_KEYS.G,
-    VALID_KEYS.H,
-    VALID_KEYS.J,
-    VALID_KEYS.K,
-    VALID_KEYS.L,
-  ],
-  [
-    VALID_KEYS.Z,
-    VALID_KEYS.X,
-    VALID_KEYS.C,
-    VALID_KEYS.V,
-    VALID_KEYS.B,
-    VALID_KEYS.N,
-    VALID_KEYS.M,
-  ],
+  [KEYS.A, KEYS.S, KEYS.D, KEYS.F, KEYS.G, KEYS.H, KEYS.J, KEYS.K, KEYS.L],
+  [KEYS.Z, KEYS.X, KEYS.C, KEYS.V, KEYS.B, KEYS.N, KEYS.M],
 ];
